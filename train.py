@@ -16,7 +16,8 @@ from pGRACE.functional import drop_feature, drop_edge_weighted, \
 from pGRACE.eval import log_regression, MulticlassEvaluator
 from pGRACE.utils import get_base_model, get_activation, \
     generate_split, compute_pr, eigenvector_centrality
-from pGRACE.dataset import get_dataset
+
+from lp_common import LPEval, LPLoader
 
 
 def train():
@@ -54,7 +55,14 @@ def train():
 
 def test(final=False):
     model.eval()
+    # node embeddings
     z = model(data.x, data.edge_index)
+    
+    LPEval.eval(
+        graph, 
+        z.cpu().detach().numpy()
+    )
+    exit(0)
 
     evaluator = MulticlassEvaluator()
     if args.dataset == 'WikiCS':
@@ -125,13 +133,16 @@ if __name__ == '__main__':
 
     device = torch.device(args.device)
 
-    path = osp.expanduser('~/datasets')
-    path = osp.join(path, args.dataset)
-    dataset = get_dataset(path, args.dataset)
+    # path = osp.expanduser('datasets')
+    # path = osp.join(path, args.dataset)
+    # dataset = get_dataset(path, args.dataset)
 
-    data = dataset[0]
+
+    # data = dataset[0]
+
+    graph, data, feature_dim = LPLoader().load_data()
+
     data = data.to(device)
-
     # generate split
     split = generate_split(data.num_nodes, train_ratio=0.1, val_ratio=0.1)
 
@@ -140,7 +151,7 @@ if __name__ == '__main__':
     elif args.load_split:
         split = torch.load(args.load_split)
 
-    encoder = Encoder(dataset.num_features, param['num_hidden'], get_activation(param['activation']),
+    encoder = Encoder(feature_dim, param['num_hidden'], get_activation(param['activation']),
                       base_model=get_base_model(param['base_model']), k=param['num_layers']).to(device)
     model = GRACE(encoder, param['num_hidden'], param['num_proj_hidden'], param['tau']).to(device)
     optimizer = torch.optim.Adam(
@@ -187,11 +198,11 @@ if __name__ == '__main__':
         if 'train' in log:
             print(f'(T) | Epoch={epoch:03d}, loss={loss:.4f}')
 
-        if epoch % 100 == 0:
-            acc = test()
+        # if epoch % 100 == 0:
+        #     acc = test()
 
-            if 'eval' in log:
-                print(f'(E) | Epoch={epoch:04d}, avg_acc = {acc}')
+        #     if 'eval' in log:
+        #         print(f'(E) | Epoch={epoch:04d}, avg_acc = {acc}')
 
     acc = test(final=True)
 

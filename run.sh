@@ -1,0 +1,1 @@
+python train.py --device cuda:0 --dataset DBLP --param local:wikics.json --drop_scheme degree
