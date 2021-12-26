@@ -78,6 +78,8 @@ class Context:
     twitter_feat_dim = 500  # the real dimension may be a little bit more than this value
     embedding_method = 0  # 0: original embeddings / features, 1: node2vec
     feature_concat_embedding = False  # True / False, new embeddings with original embeddings / features together
+    use_shuffle = True
+    neg_pos_ratio = 1
 
     # 2. generator
     tr_ge_divide_ratio = 0.5
@@ -96,7 +98,7 @@ class Profile(Context):
     profile_e = "ppi"
     profile_f = "twitter"
     profile_g = "blogcatalog"
-    profile = profile_b
+    profile = profile_d
 
     if profile == profile_a:
         dataset = "dblp"
@@ -323,7 +325,7 @@ class LPLoader:
             
             return new_graph
 
-    def twitter(self, num=1000):
+    def twitter(self, num=100):
         feature_dicts = dict()
         edge_dicts = dict()
         entity_num = 0
@@ -490,7 +492,7 @@ class LPLoader:
 
 class LPEval():
     @staticmethod
-    def eval(graph, emb, multi_class=False, use_shuffle=False, neg_pos_ratio=1, split_ratio=0.5):
+    def eval(graph, emb, multi_class=P.multi_class, use_shuffle=P.use_shuffle, neg_pos_ratio=P.neg_pos_ratio, split_ratio=P.tr_ge_divide_ratio):
         # feeder
         positive_sample = []
         negative_sample = []
